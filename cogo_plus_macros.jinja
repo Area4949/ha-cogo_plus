@@ -1,0 +1,840 @@
+{# File:cogo_plus_macros.jinja
+;;
+{# ========================================================
+;; CogoPlusMacros
+;;  library collection of custom cogo and shapes functions
+;;
+;;  written by jmf - 10/27/25
+;;
+;;  Additional suppoert functions to consider adding:
+;;    - Equirectangular projection support - could be useful if doing any true unit comp[utations. eg 'area'
+;;    - General matrix math functions to support ease of cogo scaling, transposing, and rotating points.
+#}
+{# ===================================================== #}
+{#  Polygon and Polyline functions                       #}
+{# ===================================================== #}
+{#
+;;Function: poly_count_points
+;; written 10/27/25 by jmf
+;;
+;; Returns: the number of point attributes for a given defined polygon or polyline. the polygon/polyline is defined in configuration.yaml
+;;
+;; usage: poly_count_points(entity_id)
+;;        entity_id - entity id of the defined polygon
+;;
+;; other macros used:
+;;      none
+#}
+{% macro poly_count_points(entity_id) %}
+  {{ states[entity_id.split('.')[0]][entity_id.split('.')[1]].attributes | count -2 }}
+{% endmacro %}
+{#
+;;Function: poly_get_point_list
+;; written 10/27/25 by jmf
+;;
+;; Returns: a point list of a given polygon or polyline. see the instructions for how to define polygon and polyline (trail) zones.
+;;
+;; usage: poly_get_point_list(entity_id, prefix)
+;;        entity_id - entity id of the defined polygon.
+;;        prefix    - polygon string prefix of the point attributes. if nil, then 'p_' is used.
+;;
+;; other macros used:
+;;      poly_count_points
+;; 
+#}
+{% macro poly_get_point_list(entity_id, prefix='p_') %}
+  {% set p_length = poly_count_points(entity_id)|int %}
+  {% set ns = namespace(points=[]) %}
+  {% for i in range(1, p_length + 1) %}
+    {% set p = state_attr(entity_id, prefix ~ i|string) %}
+    {% if p is none or p == '' %}
+      {% break %}
+    {% else %}
+      {% set ns.points = ns.points + [(p | from_json)] %}
+    {% endif %}
+  {% endfor %}
+  {{ ns.points | to_json }}
+{% endmacro %}
+{#
+;;Function: poly_ipnt
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; POLY_IPNT.LSP - written 2/95 by jmf
+;; mod 03/16/02 jmf - added limits pre-test test and some vertex checks..
+;;                    still may have a special case problem for a pt on a boundry segment..
+;;
+;; Determines if a point is inside or outside of a closed polygon
+;;
+;; usage: poly_ipnt(pt, p_lst, test_pt, fuzzy)
+;;        pt      - point to test if inside or outside of polygon
+;;        p_lst   - list of polyline verticies (must close)
+;;        test_pt - point that lies outside closed polygon, if nil then one is computed from the polyline point list bounding 'box'
+;;        fuzzy   - fuzzy equal. if nil, then fuzzy = 1e-10 is used.
+;;
+;; returns: true if point is inside a closed polygon or on a polygon segment.
+;;          false if point is outside closed polygon
+;;
+;; other macros used:
+;;      pnt_xylim
+;;      cogo_equal
+;;      cogo_inters
+;; 
+#}
+{% macro poly_ipnt(pt, p_lst, test_pt=None, fuzzy=1e-10) %}
+    {% set xylim = pnt_xylim(p_lst) | from_json %}
+
+    {% set xymin = xylim[0] %}
+    {% set xymax = xylim[2] %}
+
+    {% if test_pt is none %}
+        {% set test_pt = [xymin[0] - 0.1, pt[1]] %}
+    {% endif %}
+
+    {% set ret = false %}
+    {% if (pt[0] < xymin[0]) or (pt[0] > xymax[0]) or (pt[1] < xymin[1]) or (pt[1] > xymax[1]) %}
+        {% set ret = false %}
+    {% else %}
+        {% set ns = namespace(
+            count=1,
+            int_count=0,
+            done=false,
+            pt1=p_lst[0],
+            int_pnt_last=None
+        ) %}
+        {% set ns.pt1 = [ns.pt1[0], ns.pt1[1]] %}
+        {% for pt2_raw in p_lst[1:] %}
+            {% if ns.done %}
+                {% break %}
+            {% endif %}
+            {% set pt2 = [pt2_raw[0], pt2_raw[1]] %}
+            {% set is_eq = cogo_equal(ns.pt1, pt, fuzzy) | from_json %}
+            {% if is_eq %}
+                {% set ns.int_count = 1 %}
+                {% set ns.done = true %}
+            {% else %}
+                {% set int_pnt = cogo_inters(ns.pt1, pt2, pt, test_pt) | from_json %}
+                {% if int_pnt is sequence and not (cogo_equal(ns.int_pnt_last, int_pnt, fuzzy) | from_json) %}
+                    {% set ns.int_count = ns.int_count + 1 %}
+                {% endif %}
+                {% set ns.int_pnt_last = int_pnt %}
+            {% endif %}
+            {% set ns.count = ns.count + 1 %}
+            {% set ns.pt1 = pt2 %}
+        {% endfor %}
+        {% if ns.int_count == 1 %}
+            {% set ret = true %}
+        {% elif ns.int_count % 2 != 0 %}
+            {% set ret = true %}
+        {% else %}
+            {% set ret = false %}
+        {% endif %}
+    {% endif %}
+    {{ ret | to_json }}
+{% endmacro %}
+{#
+;;Function: poly_area
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; POLY_AREA.LSP - written 11/94 by jmf
+;;
+;; Determines the area of a closed polygon by using the cross-product algorithm.
+;;
+;; usage: poly_area(p_lst)
+;;        p_lst   - list of polygon verticies (must close)
+;;
+;; returns: the area of a closed polygon. The area returned is negative if the polygon is drawn clockwise, positive if the polygon is drawn counter-clockwise
+;;          0.0 if no polygon is passed. should pipe to '| abs' from the calling function if doing further math with it.
+;;
+;; other macros used:
+;;      none
+;; 
+#}
+{% macro poly_area(p_lst) %}
+    {% set ret = 0.0 %}
+    {% if p_lst %}
+        {% set ns = namespace(x_prod = 0.0) %}
+        {% set n = p_lst|length %}
+        {% for i in range(n) %}
+            {% set p1 = p_lst[i] %}
+            {% set p2 = p_lst[(i + 1) % n] %}
+            {% set x1 = p1[0] %}
+            {% set y1 = p1[1] %}
+            {% set x2 = p2[0] %}
+            {% set y2 = p2[1] %}
+            {% set ns.x_prod = ns.x_prod + (x1 * y2 - x2 * y1) %}
+        {% endfor %}
+        {% set ret = ns.x_prod / 2.0 %}
+    {% else %}
+        {% set ret = 0.0 %}
+    {% endif %}
+    {{ ret | to_json }}
+{% endmacro %}
+{#
+;;Function: poly_centroid
+;; Ported to jinja from my original autolisp - 10/28/25 by jmf
+;; POLY_CENTROID.LSP - written 2/95 by jmf
+;;
+;; Determines the centroid of a closed polygon.
+;;
+;; usage: poly_centroid(p_lst)
+;;        p_lst   - list of polygon verticies (must close)
+;;
+;; returns: the centroid of a closed polygon.
+;;
+;; other macros used:
+;;      poly_area
+;; 
+#}
+{% macro poly_centroid(p_lst) %}
+    {% if p_lst and p_lst|length > 2 %}
+        {% set ns = namespace(x_prod=0, y_prod=0, area=0) %}
+        {% set n = p_lst|length %}
+        {% for i in range(n) %}
+            {% set p1 = p_lst[i] %}
+            {% set p2 = p_lst[(i+1) % n] %}
+            {% set x1 = p1[0] %}
+            {% set y1 = p1[1] %}
+            {% set x2 = p2[0] %}
+            {% set y2 = p2[1] %}
+            {% set a = x1*y2 - x2*y1 %}
+            {% set ns.x_prod = ns.x_prod + ((x1 + x2) * a) %}
+            {% set ns.y_prod = ns.y_prod + ((y1 + y2) * a) %}
+        {% endfor %}
+        {% set factor = (poly_area(p_lst) | from_json | float) * 6 %}
+        {% set cx = ns.x_prod / factor %}
+        {% set cy = ns.y_prod / factor %}
+        {% set ret = [cx, cy] %}
+    {% else %}
+        {% set ret = none %}
+    {% endif %}
+    {{ ret | to_json}}
+{% endmacro %}
+{#
+;;Function: poly_iscw
+;; Ported to jinja from my original autolisp - 11/04/25 by jmf
+;; POLY_ISCW.LSP written 11\94 by jmf
+;;
+;; Returns true if a polygon or polyline is drawn clockwise
+;; and false if polygon is drawn counter clockwise.
+;;
+;; usage: poly_iscw(p_lst)
+;;        p_lst   - list of polygon verticies (must close)
+;;
+;; returns: true or false
+;;
+;; other macros used:
+;;      poly_area
+#}
+{% macro poly_iscw(p_lst) %}
+    {% set area = poly_area(p_lst) | from_json %}
+    {% if area < 0 %}
+        {% set ret = true %}
+    {% else %}
+        {% set ret = false %}
+    {% endif %}
+    {{ ret | to_json }}
+{% endmacro %}
+{# 
+;; Function: poly_cprp
+;; Ported to jinja from my original autolisp - 11/04/25 by jmf
+;; POLY_CPRP.LSP written 12/95 by jmf
+;;
+;; returns the closest perpendicular ON-SEGMENT of a polygon or polyline for a given point.
+;;
+;; usage: poly_cprp (pt, p_lst)
+;;        pt      - point to test
+;;        p_lst   - list of polyline verticies with no bulge info.
+;;
+;; returns: the closest perpendicular ON-SEGMENT point to the test point.
+;;          or None, if no closest perpendicular ON-SEGMENT found.
+;;
+;; other macros used:
+;;      none
+;;
+#}
+{% macro poly_cprp(pt, p_lst) %}
+{% set ns = namespace(
+    last_pnt = p_lst[0],
+    return_val = None,
+    last_seg_pnt = None
+)%}
+
+{% for pnt in p_lst[1:] %}
+    {% set temp_pnt = cogo_polar(pt, pi / 2 + (cogo_angle(ns.last_pnt, pnt) | from_json), 0.01) | from_json %}
+    {% set seg_pnt = cogo_inters(pt, temp_pnt, ns.last_pnt, pnt, false) | from_json %}
+    {% if seg_pnt and cogo_inters(pt, seg_pnt, ns.last_pnt, pnt) | from_json %}
+        {% if not ns.return_val %}
+             {# {% set ns.return_val = [ns.last_pnt, pnt] %} #}
+            {% set ns.return_val = seg_pnt %} 
+            {% set ns.last_seg_pnt = seg_pnt %}
+        {% elif cogo_distance(seg_pnt, pt) | from_json < cogo_distance(ns.last_seg_pnt, pt) | from_json %}
+             {# {% set ns.return_val = [ns.last_pnt, pnt] %} #}
+            {% set ns.return_val = seg_pnt %}
+            {% set ns.last_seg_pnt = seg_pnt %}
+        {% endif %}
+    {% endif %}
+    {% set ns.last_pnt = pnt %}
+{% endfor %}
+
+{{ ns.return_val | to_json }}
+{% endmacro %}
+{# 
+;; Function: poly_cpnt
+;; Ported to jinja from my original autolisp - 11/04/25 by jmf
+;; POLY_CPNT.LSP written 12/95 by jmf
+;;
+;; returns the closest vertex of a polygon or polyline for a given point.
+;;
+;; usage: poly_cpnt (pt, p_lst)
+;;        pt      - point to test
+;;        p_lst   - list of polyline verticies with no bulge info.
+;;
+;; returns: the closest polyline or polygon vertex to the test point.
+;;
+;; other macros used:
+;;      none
+;;
+#}
+{% macro poly_cpnt(pt, p_lst) %}
+    {% set ns = namespace(min_dist=None, closest=None) %}
+    {% for p in p_lst %}
+        {% set dist = cogo_distance(pt, p) | from_json %}
+        {% if ns.min_dist is none or dist < ns.min_dist %}
+            {% set ns.min_dist = dist %}
+            {% set ns.closest = p %}
+        {% endif %}
+    {% endfor %}
+    {{ ns.closest | to_json }}
+{% endmacro %}
+{# 
+;; Function: poly_coff
+;; Ported to jinja from my original autolisp - 11/04/25 by jmf
+;; POLY_COFF.LSP written 12/95 by jmf
+;;
+;; returns the closest perpendicular ON-SEGMENT distance of a polygon or polyline for a given point. If an ON-SEGMENT solution is not found, then the distance to the nearest vertex is returned  
+;;
+;; usage: poly_coff (pt, p_lst)
+;;        pt       - point to test
+;;        p_lst    - list of polyline verticies with no bulge info.
+;;        geo_flag - if set, then return the computed distance in geodetic distance, otherwise distance computed in the given coordinates. defualt is true.
+;;
+;;
+;; other macros used:
+;;      none
+;;
+#}
+{% macro poly_coff(pt, p_lst, geo_flag=true) %}
+    {% set cpnt = poly_cprp(pt, p_lst) | from_json %}
+    {% if cpnt is none %}
+        {%  set cpnt =  poly_cpnt(pt, p_lst) | from_json %}
+    {% endif %}
+    {% if geo_flag is true %}
+        {% set ret = geodetic_distance(pt, cpnt) | from_json%}
+    {% else  %}
+        {% set ret = cogo_distance(pt, cpnt) | from_json%}
+    {% endif %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+{# ===================================================== #}
+{#  General functions                                    #}
+{# ===================================================== #}
+{#
+{#
+;;Function: equal
+;; written 10/29/25 by jmf
+;;
+;; works the same as the built in autolisp function 'equal'
+;;
+;;Remarks;
+;; When comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. You can specify a ;; fuzzy amount to compensate for the difference that may result from the different methods of calculation. 
+;;
+;; Returns: true if the two numbers are essentially equal (within the fuzzy tolerance)
+;;          false if the two numbers are NOT essentially equal (within the fuzzy tolerance)
+;;
+;; usage: equal(v1, v2, fuzzy)
+;;        v1    - real number 
+;;        v2    - real number
+;;        fuzzy - the fuzzy equal tolerance
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro equal(v1, v2, fuzzy=1e-8) %}
+    {% set ret = false %}
+    {% if v1 is number and v2 is number %}
+        {% if (v2 - v1) | abs <= fuzzy %}
+            {% set ret = true %}
+        {% else %}
+            {% set ret = false %}
+        {% endif %}
+    {% endif %}
+    {{ ret | to_json}}
+{% endmacro %}
+{# 
+;;Function: lt_equal
+;; written 10/29/25 by jmf
+;;
+;; A less than or equal with a fuzzy equal
+;;
+;;
+;; usage: lt_equal(v1, v2, fuzzy)
+;;        v1    - real number 
+;;        v2    - real number
+;;        fuzzy - the fuzzy equal tolerance
+;;
+;; other macros used:
+;;      equal
+;; 
+#}
+{% macro lt_equal(v1, v2, fuzzy=1e-8) %}
+    {% set ret = false %}
+    {% if v1 is number and v2 is number %}
+        {% if v1 < v2 %}
+            {% set ret = true %}
+        {% else %}
+            {% set ret = equal(v1, v2, fuzzy) | from_json %}
+        {% endif %}
+    {% endif %}
+    {{ ret | to_json}}
+{% endmacro %}
+{# 
+;;Function: gt_equal
+;; written 10/29/25 by jmf
+;;
+;; A greater than or equal with a fuzzy equal
+;;
+;;
+;; usage: gt_equal(v1, v2, fuzzy)
+;;        v1    - real number 
+;;        v2    - real number
+;;        fuzzy - the fuzzy equal tolerance
+;;
+;; other macros used:
+;;      equal
+;; 
+#}
+{% macro gt_equal(v1, v2, fuzzy=1e-8) %}
+    {% set ret = false %}
+    {% if v1 is number and v2 is number %}
+        {% if v1 > v2 %}
+            {% set ret = true %}
+        {% else %}
+            {% set ret = equal(v1, v2, fuzzy) | from_json %}
+        {% endif %}
+    {% endif %}
+    {{ ret | to_json}}
+{% endmacro %}
+
+{# ===================================================== #}
+{#  COGO functions                                       #}
+{# ===================================================== #}
+{#
+;;Function: cogo_inters
+;; written 10/27/25 by jmf
+;; mod 10/29/2025 jmf - debugged and and added the fuzzy tests to make it work consistently and properly in the smaller number scales of geodetic coordinate systems...
+;;
+;; works the same as the built in autolisp function 'inters'
+;;
+;; Returns: an intersection point from a list of 4 points representing 2 lines
+;;          none if no intersection point is found
+;;
+;; usage: cogo_inters(A, B, C, D, on_seg)
+;;        A - Beginning point of line segment #1
+;;        B - Ending point of line segemnt #1
+;;        C - Beginning point of line segment #2
+;;        D - Ending point of line segemnt #2
+;;        on_seg (optional)- on-segment flag, if true then the intersection point must lie on the segments - boolean
+;;                                  if false, then the intersection point can lie on the segments extended
+;;                                  default is true
+;;
+;; other macros used:
+;;      gt_equal
+;;      lt_equal
+;; 
+#}
+{% macro cogo_inters(A, B, C, D, on_seg=true) %}
+    {% set x1 = A[0] %}
+    {% set y1 = A[1] %}
+    {% set x2 = B[0] %}
+    {% set y2 = B[1] %}
+    {% set x3 = C[0] %}
+    {% set y3 = C[1] %}
+    {% set x4 = D[0] %}
+    {% set y4 = D[1] %}
+
+    {% set denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4) %}
+    {% set fuzzy = 1e-6 %}
+
+    {% if denom == 0 %}
+        {% set result = false %}
+    {% else %}
+        {% set px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / denom %}
+        {% set py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / denom %}
+
+        {% set is_on_AB = (
+            gt_equal(px, min(x1, x2), fuzzy) | from_json and lt_equal(px, max(x1, x2), fuzzy) | from_json and
+            gt_equal(py, min(y1, y2), fuzzy) | from_json and lt_equal(py, max(y1, y2), fuzzy) | from_json
+        ) %}
+        {% set is_on_CD = (
+            gt_equal(px, min(x3, x4), fuzzy) | from_json and lt_equal(px, max(x3, x4), fuzzy) | from_json and
+            gt_equal(py, min(y3, y4), fuzzy) | from_json and lt_equal(py, max(y3, y4), fuzzy) | from_json
+        ) %}
+        {% if is_on_AB and is_on_CD %}
+            {% set result = [px, py] %}
+          {% else %}
+            {% set result = false %}
+        {% endif %}
+    {% endif %}
+    {{ result | to_json }}
+{% endmacro %}
+{#
+;;Function: cogo_equal
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; COGO_EQUAL.LSP - written 2/95 by jmf
+;;
+;; Determines if 2 points are essentially equal.
+;;
+;;Remarks;
+;; When comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. You can specify a ;; fuzzy amount to compensate for the difference that may result from the different methods of calculation. 
+;; 
+;; Returns: true if the points are the 'same' within the fuzzy tolerance for delta x and delta y.
+;;          false if the points are not the same within the fuzzy tolerance.
+;;
+;; usage: cogo_equal(p1, p2, fuzzy)
+;;        p1    - Point #1 to test
+;;        p2    - Point #2 to test
+;;        fuzzy - fuzzy equal. if nil, then fuzzy = 1e-10 is used.
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro cogo_equal(p1, p2, fuzzy=1e-10) %}
+    {% set ret = false %}
+    {% if p1 is sequence and p2 is sequence %}
+        {% set dx = (p1[0] - p2[0]) | abs %}
+        {% set dy = (p1[1] - p2[1]) | abs %}
+        {% if dx < fuzzy and dy < fuzzy %}
+            {% set ret = true %}
+        {% else %}
+            {% set ret = false %}
+        {% endif %}
+    {% endif %}
+    {{ ret | to_json}}
+{% endmacro %}
+
+{#
+;;Function: cogo_angle
+;; written 10/29/25 by jmf
+;;
+;; works the same as the built in autolisp function 'angle'
+;;
+;; Returns: Returns an angle in radians of a line defined by two endpoints.
+;;
+;; usage: cogo_angle(p1, p2)
+;;        p1 - Point #1
+;;        p2 - Point #2
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro cogo_angle(p1, p2) %}
+  {% set dx = p2[0] - p1[0] %}
+  {% set dy = p2[1] - p1[1] %}
+  {% set ret = atan2(dy, dx) %}
+  {{ ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: cogo_polar
+;; written 10/29/25 by jmf
+;;
+;; works the same as the built in autolisp function 'polar'
+;;
+;; Returns: Returns the point at a specified angle and distance from a point. 
+;;
+;; usage: cogo_polar(p1, ang, dist)
+;;        p1   - from point
+;;        ang  - an angle expressed in radians (real)
+;;        dist - distance (real or int)
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro cogo_polar(p1, ang, dist) %}
+  {% set x2 = p1[0] + dist * cos(ang) %}
+  {% set y2 = p1[1] + dist * sin(ang) %}
+  {% set ret = [x2,y2] %}
+  {{ ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: cogo_distance
+;; written 10/28/25 by jmf
+;;
+;; works the same as the built in autolisp function 'distance'
+;;
+;; Returns: the distance between 2 points.
+;;
+;; usage: cogo_distance(p1, p2)
+;;        p1 - Point #1
+;;        p2 - Point #2
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro cogo_distance(p1, p2) %}
+    {% set dx = p2[0] - p1[0] %}
+    {% set dy = p2[1] - p1[1] %}
+    {% set ret = (dx*dx + dy*dy) ** 0.5 %}
+    {{ ret | to_json }}
+{% endmacro %}
+{#
+;;Function: cogo_midpoint
+;; Ported to jinja from my original autolisp - 10/28/25 by jmf
+;; COGO_MIDPOINT.LSP - written 2/95 by jmf
+;;
+;; Returns: the midpoint between two points.
+;;
+;; usage: cogo_midpoint(p1, p2)
+;;        p1 - Point #1
+;;        p2 - Point #2
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro cogo_midpoint(p1, p2) %}
+    {% set mx = (p1[0] + p2[0]) / 2 %}
+    {% set my = (p1[1] + p2[1]) / 2 %}
+    {% set ret = [mx, my] %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+
+{# ===================================================== #}
+{#  Geodetic functions                                   #}
+{# ===================================================== #}
+{#
+;;Function: geodetic_distance
+;; written 10/29/25 by jmf
+;;
+;; the built in home assistant jinja 'distance' function has a non-standard way of passing cogo input variables...
+;; - really kind of funky and not like any other cogo distance function i've ever seen...
+;; - anyway, lets make a 'standard' cogo distance function that works as expected. ie pass it two points in the format of [x1, y1] and [x2, y2]. - just like a 'real' cogo distance function.
+;; - I have no way for determining the algorithm that HASS is using for computing this. is it using a true geodetic inverse method using the wgs geoid definition, or is it an approximation
+;;   using the Haversine formula? probably doesn't matter for the limited need for accuracy on this platform. ie. we're not doing computations to land surveying level of accuraccy ;-)
+;;
+;; Returns: the geodetic distance between 2 geodetic points. see home assistant documentation for the 'distance' function. 
+;;
+;; usage: geodetic_distance(p1, p2)
+;;        p1 - Point #1 - geodetic [long, lat]
+;;        p2 - Point #2 - geodetic [long, lat]
+;;
+;; other macros used:
+;;      none.
+;; 
+#}
+{% macro geodetic_distance(p1, p2) %}
+    {% set p1x = p1[0] %}
+    {% set p1y = p1[1] %}
+    {% set p2x = p2[0] %}
+    {% set p2y = p2[1] %}
+    {% set ret = distance(p1y, p1x, p2y, p2x) %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+{# ===================================================== #}
+{# Point Functions for polygons                          #}
+{# ===================================================== #}
+{#
+;;Function: pnt_xmin
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_XMIN.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the minimum x value.
+;;
+#}
+{% macro pnt_xmin(lst) %}
+    {% set ns = namespace(ret=lst[0]) %}
+    {% for n in lst %}
+        {% if n[0] < ns.ret[0] %}
+            {% set ns.ret = n %}
+        {% endif %}
+    {% endfor %}
+    {{ ns.ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_xmax
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_XMAX.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the maximum x value.
+;;
+#}
+{% macro pnt_xmax(lst) %}
+    {% set ns = namespace(ret=lst[0]) %}
+    {% for n in lst %}
+        {% if n[0] > ns.ret[0] %}
+            {% set ns.ret = n %}
+        {% endif %}
+    {% endfor %}
+    {{ ns.ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_ymin
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_YMIN.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the minimum y value.
+;;
+#}
+{% macro pnt_ymin(lst) %}
+    {% set ns = namespace(ret=lst[0]) %}
+    {% for n in lst %}
+        {% if n[1] < ns.ret[1] %}
+            {% set ns.ret = n %}
+        {% endif %}
+    {% endfor %}
+    {{ ns.ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_ymax
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_YMAX.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the maximum y value.
+#}
+{% macro pnt_ymax(lst) %}
+    {% set ns = namespace(ret=lst[0]) %}
+    {% for n in lst %}
+        {% if n[1] > ns.ret[1] %}
+            {% set ns.ret = n %}
+        {% endif %}
+    {% endfor %}
+    {{ ns.ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_xymin
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_XYMIN.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the minimum x and minimum y values.
+#}
+{% macro pnt_xymin(lst) %}
+    {% set p1 = pnt_xmin(lst) | from_json %}
+    {% set p2 = pnt_ymin(lst) | from_json %}
+    {% set ret = [p1[0], p2[1]] %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_xymax
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_XYMAX.LSP - written 2/95 by jmf
+;;
+;; returns: a point from a point list that has the maximum x and maximum y values.
+#}
+{% macro pnt_xymax(lst) %}
+    {% set p1 = pnt_xmax(lst) | from_json %}
+    {% set p2 = pnt_ymax(lst) | from_json %}
+    {% set ret = [p1[0], p2[1]] %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+{#
+;;Function: pnt_xylim
+;; Ported to jinja from my original autolisp - 10/27/25 by jmf
+;; PNT_XYLIM.LSP - written 2/95 by jmf
+;;
+;; returns: a list of 4 points from a point list that is the bounding box of the point list
+#}
+{% macro pnt_xylim(lst) %}
+    {# Assume helper macros pnt_xymin and pnt_xymax exist and return [x, y] lists #}
+    {% set p1 = pnt_xymin(lst) | from_json %}
+    {% set p3 = pnt_xymax(lst) | from_json %}
+    {% set p2 = [p1[0], p3[1]] %}
+    {% set p4 = [p3[0], p1[1]] %}
+    {% set ret = [p1, p2, p3, p4] %}
+    {{ ret | to_json }}
+{% endmacro %}
+
+{# ===================================================== #}
+{# Device Tracker Functions                              #}
+{# ===================================================== #}
+{#
+;;Function: device_in_zone
+;; written 10/27/25 by jmf
+;; mod 10/29/2025 jmf - added "Zone - Radius" type.
+;;
+;; returns: true if a device is within a polygon zone
+;;          false if a device is not within a polygon zone
+;;
+;; usage: device_in_zone(p1, entity_id, prefix)
+;;        p1        - Point to test if inside of a defined zone
+;;        entity_id - entity id of the defined zone
+;;        prefix    - point attribute prefix string used in the point attributes definitions.
+;;
+;; Zone types currently supported - See the instructions for how to define the zones.
+;;       Zone - Polygon
+;;       Zone - Radius
+;;
+;; To-Do:
+;;  - add support for named devices(entities) that have tracker capability. Currently the tracker test point is built outside of this function...
+;;  - add support for dynamic zones..eg, a 'Zone - Radius' can have it's center point defined by the geo coordinates of a tracker device, or some points of a polygon can be...
+;;    -- use case example #1, Motor home as the 'base', or an aircraft carrier, or a cruise ship. the zone shape would 'move' with it as it moves.
+;;    -- use case example #2, A shared bounday between zones. move the coords of this boundary once, and it dynamically updates both..similar conceptionally to autocad 'snap'
+;;    -- use case example #3, Set up a zone, based on multiple tracker devices. each device is a point of the polygon zone. Move any of them, and the polygon morphs with it.
+;;  - add support for storing 'persons' in custom attributes - similar to  HASS Zones. Can do this via calling a macro function from this file that sets the attrib info,,,
+;;  - maybe add support for the 'gps_accuracy' attribute for phones, etc. 
+;;       this may be where we utilize the "Zone - Buffer" type and/or dynamically modify the "Zone - Path" offsets. ie a fuzzy boundary test???
+;;  - Zone types to be added:
+;;       Zone - Path
+;;       Zone - Buffer
+#}
+{% macro device_in_zone(pt1, entity_id, prefix='p_') %}
+    {% set ent_type = states(entity_id) %}
+    {% if ent_type == "Zone - Polygon" %}
+      {# a polygon zone definition #}
+      {% set p_list = poly_get_point_list(entity_id, prefix) | from_json %}
+      {% set result = poly_ipnt(pt1, p_list, None, 1e-10) | from_json %}
+    {% elif ent_type == "Zone - Radius" %}
+        {# a circular zone definition #}
+        {% set p = state_attr(entity_id, prefix ~ 1|string) | from_json %}
+        {% set rad = state_attr(entity_id, "radius") | from_json %}
+        {% set units = state_attr(entity_id, "units") %}
+        {% set dist = geodetic_distance(pt1, p) | from_json %}
+{# ======================================================= #}                
+{# WARNING!!!, there is no way to get at the configuration distance units from jinja!!!! so, for now, let's code the conversion here based on the units attribute#}
+        {% if units == "Feet" %}
+          {% set dist = dist * 5280  %} {# imperial units - convert miles to feet #}
+        {% else %}
+          {% set dist = dist * 1000  %} {# metric units - convert km to meters #}
+        {% endif %}
+{# ======================================================= #} 
+        {% set result = dist < rad %}
+    {% elif ent_type == "Zone - Polyline" %}
+         {# a polyline zone definition #}
+         {% set offset = state_attr(entity_id, "offset") | from_json %}
+         {% set units = state_attr(entity_id, "units") %}
+         {% set p_list = poly_get_point_list(entity_id, prefix) | from_json %}
+         {% set dist = poly_coff(pt1, p_list) | from_json %}
+{# ======================================================= #}                
+{# WARNING!!!, there is no way to get at the configuration distance units from jinja!!!! so, for now, let's code the conversion here based on the units attribute#}
+         {% if units == "Feet" %}
+           {% set dist = dist * 5280  %} {# imperial units - convert miles to feet #}
+         {% else %}
+           {% set dist = dist * 1000  %} {# metric units - convert km to meters #}
+         {% endif %}
+{# ======================================================= #}          
+         {% set result = dist < offset %}
+    {%  endif %}
+    {{ result }}
+{% endmacro %}
