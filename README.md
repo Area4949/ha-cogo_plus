@@ -77,6 +77,9 @@ Think of a "Zone - Polyline" as a pathway or roadway with a defined width (coori
 ### Can I combine zones if I want to?
 Sure! If you define the 'in_zone' boolean template sensors as shown in the example, then you can further define and/or test for zone unions or zone intersections via the boolean 'and' and 'or' tests. eg: {{ device_in_zone(pt1, 'sensor.ak_airmans_zone_polygon') or device_in_zone(pt1, 'sensor.ted_stevens_airport_zone') }}
 
+### Performing planer cogo math with geodetic coordinates is technically not correct. Why are you doing this?
+You are correct. Techically, the proper way to do geodetic cogo math is to project all the geodetic coordinates onto the proper "local" plane coordinate system. Then use these projected coordinates to perform all of the cogo math. Then project back up to the geodetic coodinate system with the 'answers'. If we were doing geodetic computations to the order of accuracy of land surveying,then absolutley we would need to do these steps. However we are not concerned about land surveying accuaracy due to the relatively low level of the gps accuraccy of our tracking devices. So, performing planer cogo math with geodetic coordinates is "close enough" for this particular application.
+
 ## To-Do:
   - re-write applicable functions to use the 'do returns' feature? Jinja is really odd in that appears to sometimes change the data types on-the-fly on an exit. Had a heck of a time making everything work properly by forcing to_json and from_json...
   - add support for named devices(entities) that have tracker capability. Currently the tracker test point is built outside of the 'device_in_zone' function...
