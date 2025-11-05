@@ -1,7 +1,7 @@
 template:
   - sensor:
-      - name: "Lake Hood Zone - Radius"
-        unique_id: "lake_hood_zone_radius"
+      - name: "Ak Airmans Zone - Radius"
+        unique_id: "ak_airmans_zone_radius"
         state: "Zone - Radius"
         icon: "mdi:radius-outline"
         attributes:
@@ -9,8 +9,8 @@ template:
           radius : 500
           units: "Feet"
           is_closed: true
-      - name: "Lake Hood Zone - polygon"
-        unique_id: "lake_hood_zone_polygon"
+      - name: "AK Airmans Zone - polygon"
+        unique_id: "Ak_airmans_zone_polygon"
         state: "Zone - Polygon"
         icon: "mdi:shape-polygon-plus"
         attributes:
