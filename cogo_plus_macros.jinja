@@ -247,7 +247,10 @@
 ;;          or None, if no closest perpendicular ON-SEGMENT found.
 ;;
 ;; other macros used:
-;;      none
+;;      cogo_inters
+;;      cogo_polar
+;;      cogo_inters
+;;      cogo_distance
 ;;
 #}
 {% macro poly_cprp(pt, p_lst) %}
@@ -290,7 +293,7 @@
 ;; returns: the closest polyline or polygon vertex to the test point.
 ;;
 ;; other macros used:
-;;      none
+;;      cogo_distance
 ;;
 #}
 {% macro poly_cpnt(pt, p_lst) %}
@@ -318,7 +321,10 @@
 ;;
 ;;
 ;; other macros used:
-;;      none
+;;      poly_cprp
+;;      poly_cpnt
+;;      cogo_distance
+;;      geodetic_distance
 ;;
 #}
 {% macro poly_coff(pt, p_lst, geo_flag=true) %}
