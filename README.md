@@ -4,6 +4,9 @@ Home Assistant currently only has support for circular zones (as of November 202
 ## Custom Templates Macros
 This solution to support multiple "zone" shapes is to utilize the 'Home Assistant - Reusing templates system' (https://www.home-assistant.io/docs/configuration/templating/#reusing-templates).
 
+## No 'Front End' is currently supported.
+The current version of this too does not have a front end.
+
 ## cogo_plus_macros.jinja
 This is the support file that contains all the math functions to support the various zone shapes.
 Shapes currently supported:
@@ -24,9 +27,18 @@ Shapes currently supported:
      
      {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
 
-## Technical discussion on cogo math and the potential pitfalls
+## Technical discussion and FAQ
 ### The importance of 'fuzzy equals' in cogo math
 I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
 
-Since I have based all of the jinja functions on my prior autolisp functions, the "fuzzy equal" tests are used where they are needed to ensure correct results are provided. Jinja did not have an equivilent "equal" function, so I wrote one from scratch to provide the same functionality as the autolisp one. 
+Since I have based all of the jinja functions on my prior autolisp functions, the "fuzzy equal" tests are used where they are needed to ensure correct results are provided. Jinja did not have an equivilent "equal" function, so I wrote one from scratch to provide the same functionality as the autolisp one.
+
+### Why define the shapes in the 'Configuration.yaml' file and not in a GeoJSON file?
+Because I want the user to have the greatest flexibility with the potential to incorporate 'dynamic' points in the zone shapes definitions. 
+
+For example, one could define a 'Zone - Radius' with the center point defined with a jinja function. And this function could be a tracking device's current geodetic position. What use is this you may ask....Well one could define a 'Home' zone based on a motorhome's tracking sensor. So, the 'Home' zone would be dynamically defined and centered on where the motorhome is located at any particular time.
+
+Or, perhaps we want to define a polygon zone with common points to an adjacent polygon zone. The common points in the second zone can be defined by the points in the first one via jinja list functions. Move the common points of the first zone, and the points of the second zone dynamically update.
+
+Or, perhaps we want to define a polygon zone with a set of tracking devices. Each point of the polygon can be defined by the tracking devices current geodetic position. This would allow for a fully dynamic zone. Move any or all of the individual trackers, and the zone dynamically updates.
 
