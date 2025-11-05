@@ -45,10 +45,15 @@ Or, perhaps we want to define a polygon zone with a set of tracking devices. Eac
 ### What is the easiest way to get a zone (shape) list of geodetic points into the format that this 'add-on' requires?
 I recommend using Google Earth to define the geometry of the zones, then using the 'Save Place As' tool to export to a .kml file. Once a kml file has been created, use a text editor to open the .kml file, copy the "coordinates" section list and paste it into your favorite AI tool and ask that tool to convert the coodinates into the proper format. 
 
-I use Perplexity and my prompts are 'modify this list to match the format of a list of points without the z value.' then 'modify to match this format: p_1: "[-149.9530648641937, 61.19888434729306]"
-          p_2: "[-149.9522470285155, 61.19888813158484]"
-          p_3: "[-149.9522531387423, 61.19910884924543]"
-          p_4: "[-149.9530736697505, 61.19910933569784]"
-          p_5: "[-149.9530648641937, 61.19888434729306]"
+I use Perplexity and my prompts are 'modify this list to match the format of a list of points without the z value.' then 'modify to match this format: p_1: "[-149.9714801762212, 61.18220193377709]"
+          p_2: "[-149.9716773748038, 61.18195478028175]"
+          p_3: "[-149.9716855038654, 61.18188228574225]"
+          p_4: "[-149.9713782633992, 61.1818286392424]"
+          p_5: "[-149.9713094444549, 61.18183260821363]"
+          p_6: "[-149.9710822363566, 61.18213539980892]"
+          p_7: "[-149.9714801762212, 61.18220193377709]"
 
 This will get it into the correct format if you use perplexity. I'm sure other AI tools can do this with similar prompts...
+
+### What is a Polyline Zone, and what would I use it for?
+Think of a "Zone - Polyline" as a pathway or roadway with a defined width. The width is defined in this 'add-on' as an "Offset" attribute. The "Offset" value is 1/2 the full width of the zone. This zone shape can be useful for knowing if a tracking device is outside of a roadway, pathway, or trail. 
