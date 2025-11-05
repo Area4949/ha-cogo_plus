@@ -47,7 +47,9 @@ I recommend using Google Earth to define the geometry of the zones, then using t
 
 Once a kml file has been created, use a text editor to open the .kml file, copy the "coordinates" section list and paste it into your favorite AI tool and ask that tool to convert the coodinates into the proper format. 
 
-I use Perplexity and my prompts are 'modify this list to match the format of a list of points without the z value. -149.9714801762212,61.18220193377709,0 -149.9716773748038,61.18195478028175,0 -149.9716855038654,61.18188228574225,0 -149.9713782633992,61.1818286392424,0 -149.9713094444549,61.18183260821363,0 -149.9710822363566,61.18213539980892,0 -149.9714801762212,61.18220193377709,0 '
+I use Perplexity and my prompts are 
+
+modify this list to match the format of a list of points without the z value. -149.9714801762212,61.18220193377709,0 -149.9716773748038,61.18195478028175,0 -149.9716855038654,61.18188228574225,0 -149.9713782633992,61.1818286392424,0 -149.9713094444549,61.18183260821363,0 -149.9710822363566,61.18213539980892,0 -149.9714801762212,61.18220193377709,0
 
 then 'modify to match this format: p_1: "[-149.9714801762212, 61.18220193377709]"
           p_2: "[-149.9716773748038, 61.18195478028175]"
