@@ -773,9 +773,10 @@
 ;;Function: device_in_zone
 ;; written 10/27/25 by jmf
 ;; mod 10/29/2025 jmf - added "Zone - Radius" type.
+;; mod 11/04/2025 jmf - added "Zone - Polyline" type.
 ;;
-;; returns: true if a device is within a polygon zone
-;;          false if a device is not within a polygon zone
+;; returns: true if a device is within a defined zone
+;;          false if a device is not within a defined zone
 ;;
 ;; usage: device_in_zone(p1, entity_id, prefix)
 ;;        p1        - Point to test if inside of a defined zone
@@ -785,6 +786,7 @@
 ;; Zone types currently supported - See the instructions for how to define the zones.
 ;;       Zone - Polygon
 ;;       Zone - Radius
+;;       Zone - Polyline
 ;;
 ;; To-Do:
 ;;  - add support for named devices(entities) that have tracker capability. Currently the tracker test point is built outside of this function...
