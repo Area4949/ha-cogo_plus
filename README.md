@@ -4,8 +4,8 @@ Home Assistant currently only has support for circular zones (as of November 202
 ## Custom Templates Macros
 This solution to support multiple "zone" shapes is to utilize the 'Home Assistant - Reusing templates system' (https://www.home-assistant.io/docs/configuration/templating/#reusing-templates).
 
-## No 'Front End' is currently supported.
-The current version of this too does not have a front end.
+## No 'Front End' is currently provided.
+The current version of this 'add-on' does not have a front end.
 
 ## cogo_plus_macros.jinja
 This is the support file that contains all the math functions to support the various zone shapes.
