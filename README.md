@@ -43,7 +43,7 @@ Or, perhaps we want to define a polygon zone with common points to an adjacent p
 Or, perhaps we want to define a polygon zone with a set of tracking devices. Each point of the polygon can be defined by the tracking devices current geodetic position. This would allow for a fully dynamic zone. Move any or all of the individual trackers, and the zone dynamically updates.
 
 ## What is the easiest way to get a zone (shape) list of geodetic points in the format that this 'add-on' needs?
-I recommend using Google Earth to define the geometry of the zones, the using the 'Save Place As' tool to export to a .kml file. Once a kml file has been created, us a text editor to open the .kml file, copy the '<coordinates>' list and paste it into your favorite AI tool and ask that tool to convert the coodinates into the proper format. 
+I recommend using Google Earth to define the geometry of the zones, the using the 'Save Place As' tool to export to a .kml file. Once a kml file has been created, us a text editor to open the .kml file, copy the "coordinates" section list and paste it into your favorite AI tool and ask that tool to convert the coodinates into the proper format. 
 
 I use Perplexity and my prompts are 'modify this list to match the format of a list of points without the z value.' then 'modify to match this format: p_1: "[-149.9530648641937, 61.19888434729306]"
           p_2: "[-149.9522470285155, 61.19888813158484]"
