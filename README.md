@@ -35,11 +35,11 @@ The current version of this 'add-on' does not have a front end to help in defini
   - add support for storing 'persons' in custom attributes - similar to  HASS Zones. Can do this via calling a macro function from this file that sets the attrib info,,,
   - maybe add support for the 'gps_accuracy' attribute for phones, etc.
     
-           -- this may be where we utilize the "Zone - Buffer" type and/or dynamically modify the "Zone - Path" offsets. ie a fuzzy boundary test???
+   -- this may be where we utilize the "Zone - Buffer" type and/or dynamically modify the "Zone - Path" offsets. ie a fuzzy boundary test???
     
   - Zone types to be added:
     
-          Zone - Buffer
+   -- Zone - Buffer
     
 ## Technical discussion and FAQ
 ### The importance of 'fuzzy equals' in cogo math
