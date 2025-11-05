@@ -210,7 +210,7 @@
 {#
 ;;Function: poly_iscw
 ;; Ported to jinja from my original autolisp - 11/04/25 by jmf
-;; POLY_ISCW.LSP written 11\94 by jmf
+;; POLY_ISCW.LSP written 11/94 by jmf
 ;;
 ;; Returns true if a polygon or polyline is drawn clockwise
 ;; and false if polygon is drawn counter clockwise.
@@ -395,10 +395,10 @@
 {% macro lt_equal(v1, v2, fuzzy=1e-8) %}
     {% set ret = false %}
     {% if v1 is number and v2 is number %}
-        {% if v1 < v2 %}
+        {% if equal(v1, v2, fuzzy) | from_json %}
             {% set ret = true %}
         {% else %}
-            {% set ret = equal(v1, v2, fuzzy) | from_json %}
+            {% set ret = v1 < v2 %}
         {% endif %}
     {% endif %}
     {{ ret | to_json}}
@@ -422,10 +422,10 @@
 {% macro gt_equal(v1, v2, fuzzy=1e-8) %}
     {% set ret = false %}
     {% if v1 is number and v2 is number %}
-        {% if v1 > v2 %}
+         {% if equal(v1, v2, fuzzy) | from_json %}
             {% set ret = true %}
         {% else %}
-            {% set ret = equal(v1, v2, fuzzy) | from_json %}
+            {% set ret = v1 > v2 %}
         {% endif %}
     {% endif %}
     {{ ret | to_json}}
