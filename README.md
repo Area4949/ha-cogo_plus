@@ -25,6 +25,18 @@ Shapes currently supported:
 ## No 'Front End' is currently provided.
 The current version of this 'add-on' does not have a front end to help in defining the zone shapes.
 
+## To-Do:
+  - add support for named devices(entities) that have tracker capability. Currently the tracker test point is built outside of this function...
+  - add support for dynamic zones..eg, a 'Zone - Radius' can have it's center point defined by the geo coordinates of a tracker device, or some points of a polygon can be...
+    -- use case example #1, Motor home as the 'base', or an aircraft carrier, or a cruise ship. the zone shape would 'move' with it as it moves.
+    -- use case example #2, A shared bounday between zones. move the coords of this boundary once, and it dynamically updates both..similar conceptionally to autocad 'snap'
+    -- use case example #3, Set up a zone, based on multiple tracker devices. each device is a point of the polygon zone. Move any of them, and the polygon morphs with it.
+  - add support for storing 'persons' in custom attributes - similar to  HASS Zones. Can do this via calling a macro function from this file that sets the attrib info,,,
+  - maybe add support for the 'gps_accuracy' attribute for phones, etc. 
+       this may be where we utilize the "Zone - Buffer" type and/or dynamically modify the "Zone - Path" offsets. ie a fuzzy boundary test???
+  - Zone types to be added:
+       Zone - Buffer
+    
 ## Technical discussion and FAQ
 ### The importance of 'fuzzy equals' in cogo math
 I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct under certain conditions. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
