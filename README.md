@@ -4,9 +4,6 @@ Home Assistant currently only has support for circular zones (as of November 202
 ## Custom Templates Macros
 This solution to support multiple "zone" shapes is to utilize the 'Home Assistant - Reusing templates system' (https://www.home-assistant.io/docs/configuration/templating/#reusing-templates).
 
-## No 'Front End' is currently provided.
-The current version of this 'add-on' does not have a front end to help in defining the zone shapes.
-
 ## cogo_plus_macros.jinja
 This is the support file that contains all the math functions to support the various zone shapes.
 Shapes currently supported:
@@ -26,6 +23,9 @@ Shapes currently supported:
      {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %}
      
      {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
+
+## No 'Front End' is currently provided.
+The current version of this 'add-on' does not have a front end to help in defining the zone shapes.
 
 ## Technical discussion and FAQ
 ### The importance of 'fuzzy equals' in cogo math
