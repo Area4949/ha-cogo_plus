@@ -58,6 +58,7 @@ then
           p_4:  "[-149.9447116679241, 61.16894553112301]"
 
 This will get it into the correct format if you use perplexity. I'm sure other AI tools can do this with similar prompts...
+
          Here is your coordinate list reformatted to match the requested style. Each entry is labeled with p_n and formatted as:
          p_n: "[longitude, latitude]"
          Where n starts at 1 and increases consecutively:
