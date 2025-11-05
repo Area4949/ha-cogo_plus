@@ -11,6 +11,15 @@ Shapes currently supported:
 - Polygon
 - Polyline (corridor)
 
+## Installation and usage
+1) Copy the 'cogo_plus_macros.jinja' file to your home assistant config/custom_templates/ folder. Create this folder if it does not already exist.
+2) Edit your Configuration.yaml file to define your zones
+3) Create an 'in zone' template sensor that calls the primary zone testing function.
+   eg:
+     {% from 'cogo_plus_macros.jinja' import device_in_zone %}
+     {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %}
+     {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
+
 ## Technical discussion on cogo math and the potential pitfalls
 ### The importance of 'fuzzy equals' in cogo math
 I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
