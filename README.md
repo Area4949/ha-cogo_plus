@@ -15,9 +15,13 @@ Shapes currently supported:
 1) Copy the 'cogo_plus_macros.jinja' file to your home assistant config/custom_templates/ folder. Create this folder if it does not already exist.
 2) Edit your Configuration.yaml file to define your zones
 3) Create an 'in zone' template sensor that calls the primary zone testing function.
+
    eg:
+
      {% from 'cogo_plus_macros.jinja' import device_in_zone %}
+     
      {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %}
+     
      {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
 
 ## Technical discussion on cogo math and the potential pitfalls
