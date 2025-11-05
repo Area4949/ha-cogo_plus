@@ -18,11 +18,11 @@ Shapes currently supported:
 
    eg:
 
-     {% from 'cogo_plus_macros.jinja' import device_in_zone %}
+           {% from 'cogo_plus_macros.jinja' import device_in_zone %}
      
-     {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %}
+           {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %}
      
-     {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
+           {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
 
 ## No 'Front End' is currently provided.
 The current version of this 'add-on' does not have a front end to help in defining the zone shapes.
