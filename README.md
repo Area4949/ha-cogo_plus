@@ -43,7 +43,7 @@ The current version of this 'add-on' does not have a front end to help in defini
    -- Zone - Buffer
     
 ## Technical discussion and FAQ
-### The importance of 'fuzzy equals' in cogo math
+### The importance of 'fuzzy equals' in cogo math functions
 I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct under certain conditions. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
 
 Since I have based all of the jinja functions on my prior autolisp functions, the "fuzzy equal" tests are used where they are needed to ensure correct results are provided under all conditions. Jinja did not have an equivilent "equal" function, so I wrote one from scratch to provide the same functionality as the autolisp one.
