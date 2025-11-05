@@ -16,24 +16,24 @@ Shapes currently supported:
 2) Edit your Configuration.yaml file to define your zones. See the provided configuration.yaml example that has all the currently supported zone shapes defined. Make sure you provide the same attributes as in the example, because robust error checking is currently not provided.
 3) Re-start Home Assistant
 4) Create an 'in zone' template sensor that loads, then calls the primary testing function. The primary testing function is named: 'device_in_zone'. In the following example, the sensor will have either a true or false state.
-;;
-;;Funtion description:
-;;Function: device_in_zone
-;; written 10/27/25 by jmf
-;; mod 10/29/2025 jmf - added "Zone - Radius" type.
-;;
-;; returns: true if a device (point) is within a defined zone
-;;          false if a device (point) is not within a defined zone
-;;
-;; usage: device_in_zone(p1, entity_id, prefix)
-;;        p1        - Point to test if inside of a defined zone
-;;        entity_id - entity id of the defined zone
-;;        prefix    - point attribute prefix string used in the point attributes definitions (optional, default is 'p_').
-;;
-;; Zone types currently supported - See the instructions for how to define the zones.
-;;       Zone - Polygon
-;;       Zone - Radius
-;;       Zone - Polyline
+         ;;
+         ;;Funtion description:
+         ;;Function: device_in_zone
+         ;; written 10/27/25 by jmf
+         ;; mod 10/29/2025 jmf - added "Zone - Radius" type.
+         ;;
+         ;; returns: true if a device (point) is within a defined zone
+         ;;          false if a device (point) is not within a defined zone
+         ;;
+         ;; usage: device_in_zone(p1, entity_id, prefix)
+         ;;        p1        - Point to test if inside of a defined zone
+         ;;        entity_id - entity id of the defined zone
+         ;;        prefix    - point attribute prefix string used in the point attributes definitions (optional, default is 'p_').
+         ;;
+         ;; Zone types currently supported - See the instructions for how to define the zones.
+         ;;       Zone - Polygon
+         ;;       Zone - Radius
+         ;;       Zone - Polyline
 
    eg:
 
