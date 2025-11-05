@@ -7,7 +7,7 @@ This solution to support multiple "zone" shapes is to utilize the 'Home Assistan
 ## cogo_plus_macros.jinja
 This is the support file that contains all the math functions to support the various zone shapes.
 Shapes currently supported:
-- Circle
+- Circle (Point with Radius)
 - Polygon
 - Polyline (corridor)
 
