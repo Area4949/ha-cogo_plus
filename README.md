@@ -27,10 +27,6 @@ Shapes currently supported:
 The current version of this 'add-on' does not have a front end to help in defining the zone shapes. See the "What is the easiest way to get a zone (shape) list of geodetic points into the format that this 'add-on' requires?" section under the FAQ.
 
 ## Technical discussion and FAQ
-### The importance of 'fuzzy equals' in cogo math functions
-I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct under certain conditions. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
-
-Since I have based all of the jinja functions on my prior autolisp functions, the "fuzzy equal" tests are used where they are needed to ensure correct results are provided under all conditions. Jinja did not have an equivilent "equal" function, so I wrote one from scratch to provide the same functionality as the autolisp one.
 
 ### Why define the shapes in the 'Configuration.yaml' file and not in a GeoJSON file?
 Because I want the user to have the greatest flexibility with the potential to incorporate 'dynamic' points in the zone shapes definitions. 
@@ -79,6 +75,11 @@ Sure! If you define the 'in_zone' boolean template sensors as shown in the examp
 
 ### Performing planer cogo math with geodetic coordinates is technically not correct. Why are you doing this?
 You are correct. Techically, the proper way to do geodetic cogo math is to project all the geodetic coordinates onto the proper "local" plane coordinate system. Then use these projected coordinates to perform all of the cogo math. Then project back up to the geodetic coodinate system with the 'answers'. If we were doing geodetic computations to the order of accuracy of land surveying,then absolutley we would need to do these steps. However we are not concerned about land surveying accuaracy due to the relatively low level of the gps accuraccy of our tracking devices. So, performing planer cogo math with geodetic coordinates is "close enough" for this particular application.
+
+### The importance of 'fuzzy equals' in cogo math functions
+I have no idea whether standard libraries (such as Shapely for python) have built in fuzzy equals, but if they don't, then there is a VERY HIGH likelyhood that using these library functions as-is will return results that are not correct under certain conditions. The reason for this is because when comparing two real numbers (or two lists of real numbers, as in points), the two identical numbers can differ slightly if different methods are used to calculate them. So a rigid '==' test may return false, even though the two values are in fact 'the same'. This is why autolisp for AutoCad has included the "equal" function since inception. With this "equal" function, you can specify a fuzzy amount to compensate for the very slight difference that may result from the different methods of calculation.
+
+Since I have based all of the jinja functions on my prior autolisp functions, the "fuzzy equal" tests are used where they are needed to ensure correct results are provided under all conditions. Jinja did not have an equivilent "equal" function, so I wrote one from scratch to provide the same functionality as the autolisp one.
 
 ## To-Do:
   - re-write applicable functions to use the 'do returns' feature? Jinja is really odd in that appears to sometimes change the data types on-the-fly on an exit. Had a heck of a time making everything work properly by forcing to_json and from_json...
