@@ -24,7 +24,7 @@ Shapes currently supported:
            {{ device_in_zone(pt1, 'sensor.coastal_trail_zone_north') }}
 
 ## No 'Front End' is currently provided.
-The current version of this 'add-on' does not have a front end to help in defining the zone shapes.
+The current version of this 'add-on' does not have a front end to help in defining the zone shapes. See the "What is the easiest way to get a zone (shape) list of geodetic points into the format that this 'add-on' requires?" section under the FAQ.
 
 ## To-Do:
   - re-write applicable functions to use the 'do returns' feature? Jinja is really odd in that appears to sometimes change the data types on-the-fly on an exit. Had a heck of a time making everything work properly by forcing to_json and from_json...
