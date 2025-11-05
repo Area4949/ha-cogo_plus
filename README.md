@@ -6,3 +6,7 @@ This solution to support multiple "zone" shapes is to utilize the Home Assistant
 
 ## cogo_plus_macros.jinja
 This is the support file that contains all the math functions to support the various zone shapes.
+Shapes currently supported:
+- Circle
+- Polygon
+- Polyline (corridor)
