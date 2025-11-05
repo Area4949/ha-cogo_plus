@@ -28,12 +28,9 @@ The current version of this 'add-on' does not have a front end to help in defini
 ## To-Do:
   - add support for named devices(entities) that have tracker capability. Currently the tracker test point is built outside of this function...
   - add support for dynamic zones..eg, a 'Zone - Radius' can have it's center point defined by the geo coordinates of a tracker device, or some points of a polygon can be...
-    
-           -- use case example #1, Motor home as the 'base', or an aircraft carrier, or a cruise ship. the zone shape would 'move' with it as it moves.
-    
-           -- use case example #2, A shared bounday between zones. move the coords of this boundary once, and it dynamically updates both..similar conceptionally to autocad 'snap'
-    
-           -- use case example #3, Set up a zone, based on multiple tracker devices. each device is a point of the polygon zone. Move any of them, and the polygon morphs with it.
+  1) use case example: Motor home as the 'base', or an aircraft carrier, or a cruise ship. the zone shape would 'move' with it as it moves.
+  2) use case example: A shared bounday between zones. move the coords of this boundary once, and it dynamically updates both..similar conceptionally to autocad 'snap'
+  3) use case example #3, Set up a zone, based on multiple tracker devices. each device is a point of the polygon zone. Move any of them, and the polygon morphs with it.
     
   - add support for storing 'persons' in custom attributes - similar to  HASS Zones. Can do this via calling a macro function from this file that sets the attrib info,,,
   - maybe add support for the 'gps_accuracy' attribute for phones, etc.
