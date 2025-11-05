@@ -68,7 +68,7 @@ This will get it into the correct format if you use perplexity. I'm sure other A
          p_7: "[-149.9714801762212, 61.18220193377709]"
 
 ### What is a Polyline Zone, and what would I use it for?
-Think of a "Zone - Polyline" as a pathway or roadway with a defined width (cooridor). The width is defined in this 'add-on' as an "Offset" attribute. The "Offset" value is 1/2 the full width of the zone. This zone shape can be useful for knowing if a tracking device is inside or outside of a linear feature. 
+Think of a "Zone - Polyline" as a pathway or roadway with a defined width (cooridor). The width is defined in this 'add-on' as an "Offset" attribute. The "Offset" value is 1/2 the full width of the zone. This zone shape can be useful for knowing if a tracking device is inside or outside of a linear feature with a given width. 
 
 ### Can I combine zones if I want to?
 Sure! If you define the 'in_zone' boolean template sensors as shown in the example, then you can further define and/or test for zone unions or zone intersections via the boolean 'and' and 'or' tests. eg: {{ device_in_zone(pt1, 'sensor.ak_airmans_zone_polygon') or device_in_zone(pt1, 'sensor.ted_stevens_airport_zone') }}
