@@ -51,7 +51,7 @@ I use Perplexity and my prompts are
 
 then
 
-#### modify to match this format:
+          modify to match this format:
           p_1: "[-149.9714801762212, 61.18220193377709]"
           p_2: "[-149.9716773748038, 61.18195478028175]"
           p_3: "[-149.9716855038654, 61.18188228574225]"
