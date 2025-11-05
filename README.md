@@ -13,7 +13,7 @@ Shapes currently supported:
 
 ## Installation and usage
 1) Copy the 'cogo_plus_macros.jinja' file to your home assistant config/custom_templates/ folder. Create this folder if it does not already exist. See the 'Home Assistant - Reusing templates system' documentation.
-2) Edit your Configuration.yaml file to define your zones. See the provided example that has all the currently supported zone shapes defined. Make sure you provide the same attributes as in the example, because robust error checking is currently not provided.
+2) Edit your Configuration.yaml file to define your zones. See the provided configuration.yaml example that has all the currently supported zone shapes defined. Make sure you provide the same attributes as in the example, because robust error checking is currently not provided.
 3) Re-start Home Assistant
 4) Create an 'in zone' template sensor that loads, then calls the primary testing function. The pimary testing function is named: 'device_in_zone'. In the following example, the sensor will have either a true or false state.
 
