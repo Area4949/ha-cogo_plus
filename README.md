@@ -52,15 +52,22 @@ I use Perplexity and my prompts are
 then
 
           modify to match this format:
-          p_1: "[-149.9714801762212, 61.18220193377709]"
-          p_2: "[-149.9716773748038, 61.18195478028175]"
-          p_3: "[-149.9716855038654, 61.18188228574225]"
-          p_4: "[-149.9713782633992, 61.1818286392424]"
-          p_5: "[-149.9713094444549, 61.18183260821363]"
-          p_6: "[-149.9710822363566, 61.18213539980892]"
-          p_7: "[-149.9714801762212, 61.18220193377709]"
+          p_1:  "[-150.0473937469993, 61.16639584745547]"
+          p_2:  "[-149.9701612614392, 61.16683672889118]"
+          p_3:  "[-149.9637548431457, 61.16877164284922]"
+          p_4:  "[-149.9447116679241, 61.16894553112301]"
 
 This will get it into the correct format if you use perplexity. I'm sure other AI tools can do this with similar prompts...
+         Here is your coordinate list reformatted to match the requested style. Each entry is labeled with p_n and formatted as:
+         p_n: "[longitude, latitude]"
+         Where n starts at 1 and increases consecutively:
+         p_1: "[-149.9714801762212, 61.18220193377709]"
+         p_2: "[-149.9716773748038, 61.18195478028175]"
+         p_3: "[-149.9716855038654, 61.18188228574225]"
+         p_4: "[-149.9713782633992, 61.1818286392424]"
+         p_5: "[-149.9713094444549, 61.18183260821363]"
+         p_6: "[-149.9710822363566, 61.18213539980892]"
+         p_7: "[-149.9714801762212, 61.18220193377709]"
 
 ### What is a Polyline Zone, and what would I use it for?
 Think of a "Zone - Polyline" as a pathway or roadway with a defined width. The width is defined in this 'add-on' as an "Offset" attribute. The "Offset" value is 1/2 the full width of the zone. This zone shape can be useful for knowing if a tracking device is outside of a roadway, pathway, or trail. 
