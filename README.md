@@ -36,7 +36,7 @@ Since I have based all of the jinja functions on my prior autolisp functions, th
 ### Why define the shapes in the 'Configuration.yaml' file and not in a GeoJSON file?
 Because I want the user to have the greatest flexibility with the potential to incorporate 'dynamic' points in the zone shapes definitions. 
 
-For example, one could define a 'Zone - Radius' with the center point defined with a jinja function. And this function could be a tracking device's current geodetic position. What use is this you may ask....Well one could define a 'Home' zone based on a motorhome's tracking sensor. So, the 'Home' zone would be dynamically defined and centered on where the motorhome is located at any particular time.
+For example, one could define a 'Zone - Radius' with the center point defined with a jinja function. And this function could be a tracking device's current geodetic position. What use is this you may ask....Well one could define a 'Home' zone based on a motorhome's tracking sensor. So, the 'Home' zone would be dynamically defined and centered on wherever the motorhome is located at any particular time.
 
 Or, perhaps we want to define a polygon zone with common points to an adjacent polygon zone. The common points in the second zone can be defined by the points in the first one via jinja list functions. Move the common points of the first zone, and the points of the second zone dynamically update.
 
