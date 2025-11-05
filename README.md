@@ -35,7 +35,7 @@ Shapes currently supported:
                 Zone - Radius
                 Zone - Polyline
 
-   eg:
+   example usage:
 
            {% from 'cogo_plus_macros.jinja' import device_in_zone %}
            {% set pt1 = [ state_attr('device_tracker.an_iphone_3', 'longitude'), state_attr('device_tracker.an_iphone_3', 'latitude') ] %} 
